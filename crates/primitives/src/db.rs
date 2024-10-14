@@ -97,3 +97,8 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
         self.0.commit(changes)
     }
 }
+
+pub trait VerkleDatabase {
+    type Error;
+    fn get_node(&self, key: B256) -> Result<Option<B256>, Self::Error>;
+}

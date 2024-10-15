@@ -1,7 +1,7 @@
-use crate::primitives::{db::VerkleDatabaseRef, Address, U256};
+use crate::primitives::db::VerkleDatabaseRef;
 use crate::interpreter::gas::{WITNESS_BRANCH_READ, WITNESS_BRANCH_WRITE, WITNESS_CHUNK_FILL, WITNESS_CHUNK_READ, WITNESS_CHUNK_WRITE};
-use ffi_interface::{get_tree_key, Context};
-use verkle_spec::{Storage, Code, Hasher, U256 as VerkleU256, H256};
+use ffi_interface::Context;
+use verkle_spec::{Storage, Code, Hasher, U256 as VerkleU256, H256, hash64};
 const BASIC_DATA_LEAF_KEY: u8 = 0;
 const CODE_HASH_LEAF_KEY: u8 = 1;
 pub struct DefaultHasher;
@@ -198,8 +198,12 @@ impl<DB: VerkleDatabaseRef> Witness<DB> {
     }
 }
 
-fn get_tree_key(context: &Context, address: Address, tree_index: [u8; 32], sub_index: u8) -> [u8; 32] {
-    let context = Context::default();
-    let key = get_tree_key(&context, address, tree_index, sub_index);
-    key
+fn get_tree_key(context: &Context, address: [u8; 32], tree_index: [u8; 32], sub_index: u8) -> [u8; 32] {
+    let mut input = [0u8; 64];
+    input[..32].copy_from_slice(&address);
+    input[32..].copy_from_slice(&tree_index);
+    let mut hash = hash64(&context.committer, input).to_fixed_bytes();
+    hash[31] = sub_index;
+
+    hash
 }

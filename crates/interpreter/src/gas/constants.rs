@@ -52,3 +52,10 @@ pub const INITCODE_WORD_COST: u64 = 2;
 
 pub const CALL_STIPEND: u64 = 2300;
 pub const MIN_CALLEE_GAS: u64 = CALL_STIPEND;
+
+/// EIP-4762 : Statelesness gas costs changes
+pub const WITNESS_CHUNK_READ: u64 = 200;
+pub const WITNESS_CHUNK_WRITE: u64 = 500;
+pub const WITNESS_CHUNK_FILL: u64 = 6200;
+pub const WITNESS_BRANCH_READ: u64 = 1900;
+pub const WITNESS_BRANCH_WRITE: u64 = 3000;

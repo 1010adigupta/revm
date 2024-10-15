@@ -22,7 +22,7 @@ mod inspector;
 mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
-
+pub mod witness;
 // Export items.
 
 pub use builder::EvmBuilder;

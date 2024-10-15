@@ -98,7 +98,30 @@ impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
     }
 }
 
+/// Verkle Database Interface
+#[auto_impl(&mut, Box)]
 pub trait VerkleDatabase {
+    /// The database error type
     type Error;
-    fn get_node(&self, key: B256) -> Result<Option<B256>, Self::Error>;
+
+    /// Get the leaf node for the given key
+    fn get_leaf(&mut self, key: [u8; 32]) -> Result<Option<[u8; 32]>, Self::Error>;
 }
+
+/// Verkle Database Commit Interface
+#[auto_impl(&mut, Box)]
+pub trait VerkleDatabaseCommit {
+    /// Commit the changes to the database
+    fn commit(&mut self);
+}
+
+/// Verkle Database Reference Interface
+#[auto_impl(&, &mut, Box, Rc, Arc)]
+pub trait VerkleDatabaseRef {
+    /// The database error type
+    type Error;
+
+    /// Get the leaf node for the given key
+    fn get_leaf_ref(&self, key: [u8; 32]) -> Result<Option<[u8; 32]>, Self::Error>;
+}
+

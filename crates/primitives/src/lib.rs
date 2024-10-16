@@ -12,7 +12,7 @@ mod constants;
 pub mod db;
 pub mod eip7702;
 pub mod env;
-
+pub mod verkle_db;
 #[cfg(any(feature = "c-kzg", feature = "kzg-rs"))]
 pub mod kzg;
 pub mod precompile;

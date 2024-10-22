@@ -1,15 +1,16 @@
-use crate::primitives::db::VerkleDatabaseRef;
+use crate::primitives::verkle_db::VerkleDatabaseRef;
 use crate::interpreter::gas::{WITNESS_BRANCH_READ, WITNESS_BRANCH_WRITE, WITNESS_CHUNK_FILL, WITNESS_CHUNK_READ, WITNESS_CHUNK_WRITE};
 use ffi_interface::Context;
+use revm_precompile::B256;
 use verkle_spec::{Storage, Code, Hasher, U256 as VerkleU256, H256, hash64};
 const BASIC_DATA_LEAF_KEY: u8 = 0;
 const CODE_HASH_LEAF_KEY: u8 = 1;
 pub struct DefaultHasher;
 impl Hasher for DefaultHasher {}
 pub struct Witness<DB: VerkleDatabaseRef>{
-    pub accessed_leaves: Vec<[u8; 32]>,
+    pub accessed_leaves: Vec<B256>,
     pub accessed_subtrees: Vec<Vec<u8>>,
-    pub modified_leaves: Vec<[u8; 32]>,
+    pub modified_leaves: Vec<B256>,
     pub modified_subtrees: Vec<Vec<u8>>,
     pub db: DB,
     // true part of this property is never used currently
@@ -22,7 +23,7 @@ impl<DB: VerkleDatabaseRef> Witness<DB> {
         Self { accessed_leaves: vec![], accessed_subtrees: vec![vec![]], modified_leaves: vec![], modified_subtrees: vec![vec![]], charge_fill_cost: false, db }
     }
 
-    pub fn accessed_leaves(&self) -> &Vec<[u8; 32]> {
+    pub fn accessed_leaves(&self) -> &Vec<B256> {
         &self.accessed_leaves
     }
 
@@ -30,7 +31,7 @@ impl<DB: VerkleDatabaseRef> Witness<DB> {
         &self.accessed_subtrees
     }
 
-    pub fn modified_leaves(&self) -> &Vec<[u8; 32]> {
+    pub fn modified_leaves(&self) -> &Vec<B256> {
         &self.modified_leaves
     }
 
@@ -67,7 +68,7 @@ impl<DB: VerkleDatabaseRef> Witness<DB> {
 
     pub fn access_for_storage(&mut self, address: H256, key: VerkleU256, is_write: bool, gas_available: &mut u64) -> Result<bool, DB::Error> {
         let tree_key = Storage::new::<DefaultHasher>(address, key).storage_slot();
-        self.access_key(tree_key.into(), true, is_write, gas_available)
+        self.access_key(tree_key.to_fixed_bytes().into(), true, is_write, gas_available)
     }
 
     pub fn access_for_block_hash_op_code(&mut self, address: H256, key: VerkleU256, gas_available: &mut u64) -> Result<bool, DB::Error> {
@@ -100,7 +101,7 @@ impl<DB: VerkleDatabaseRef> Witness<DB> {
 
     pub fn access_code_chunk(&mut self, address: H256, chunk_id: VerkleU256, is_write: bool, gas_available: &mut u64) -> Result<bool, DB::Error> {
         let key = Code::new::<DefaultHasher>(address, chunk_id).code_chunk();
-        self.access_key(key.into(), true, is_write, gas_available)
+        self.access_key(key.to_fixed_bytes().into(), true, is_write, gas_available)
     }
 
     pub fn access_for_absent_account(&mut self, address: [u8; 32], gas_available: &mut u64) -> Result<bool, DB::Error> {
@@ -137,12 +138,12 @@ impl<DB: VerkleDatabaseRef> Witness<DB> {
     ) -> Result<bool, DB::Error> {
         let context = Context::default();
         let key = get_tree_key(&context, address, tree_index, sub_index);
-        self.access_key(key, charge_gas, is_write, gas_available)
+        self.access_key(key.into(), charge_gas, is_write, gas_available)
     }
 
     fn access_key(
         &mut self,
-        key: [u8; 32],
+        key: B256,
         charge_gas: bool,
         is_write: bool,
         gas_available: &mut u64,
